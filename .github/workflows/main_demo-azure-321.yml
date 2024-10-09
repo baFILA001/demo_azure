@@ -4,13 +4,13 @@ on:
   push:
     branches:
       - Dev         # For Dev environment
-      - Stage     # For Staging environment
-      - Prod   # For Production environment
+      - Stage       # For Staging environment
+      - Prod        # For Production environment
   workflow_dispatch:
 
 env:
   AZURE_FUNCTIONAPP_PACKAGE_PATH: '.'  # Path to your web app project, defaults to the repository root
-  PYTHON_VERSION: '3.11'               # Python version to use (supports 3.6, 3.7, 3.8, etc.)
+  PYTHON_VERSION: '3.11'               # Python version to use
 
 jobs:
   build:
@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     permissions:
-      id-token: write  # This is required for requesting the JWT
+      id-token: write  # Required for JWT
 
     steps:
       - name: Download artifact from build job
@@ -58,43 +58,58 @@ jobs:
       - name: Unzip artifact for deployment
         run: unzip release.zip     
 
-      - name: Login to Azure
+      # Login to Azure with the correct federated identity for each environment
+      - name: Login to Azure (Dev)
+        if: github.ref == 'refs/heads/Dev'
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
-      # Conditional deployment based on branch (environment)
+      - name: Login to Azure (Stage)
+        if: github.ref == 'refs/heads/Stage'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
+
+      - name: Login to Azure (Prod)
+        if: github.ref == 'refs/heads/Prod'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
+
+      # Deploy to the appropriate Azure Function App based on the branch
       - name: 'Deploy to Azure Function App (Dev)'
-        if: github.ref == 'refs/heads/Dev'  # Condition for Development environment
+        if: github.ref == 'refs/heads/Dev'
         uses: Azure/functions-action@v1
         with:
-          app-name: ${{ secrets.APP_NAME_DEV }}  # Deploy to Dev Azure Function App
+          app-name: ${{ secrets.APP_NAME_DEV }}
           slot-name: 'Dev'
           package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
           scm-do-build-during-deployment: true
           enable-oryx-build: true
 
       - name: 'Deploy to Azure Function App (Stage)'
-        if: github.ref == 'refs/heads/Stage'  # Condition for Staging environment
+        if: github.ref == 'refs/heads/Stage'
         uses: Azure/functions-action@v1
         with:
-          app-name: ${{ secrets.APP_NAME_STAGE }}  # Deploy to Stage Azure Function App (or another resource)
+          app-name: ${{ secrets.APP_NAME_STAGE }}
           slot-name: 'Stage'
           package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
           scm-do-build-during-deployment: true
           enable-oryx-build: true
           
-      - name: 'Deploy to Azure Function App (Production)'
-        if: github.ref == 'refs/heads/Prod'  # Condition for Production environment
+      - name: 'Deploy to Azure Function App (Prod)'
+        if: github.ref == 'refs/heads/Prod'
         uses: Azure/functions-action@v1
         with:
-          app-name: ${{ secrets.APP_NAME_PROD }}  # Deploy to Production Azure Function App
+          app-name: ${{ secrets.APP_NAME_PROD }}
           slot-name: 'Prod'
           package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
           scm-do-build-during-deployment: true
           enable-oryx-build: true
-
-    environment:
-      name: ${{ github.ref == 'refs/heads/Dev' && 'Dev' || github.ref == 'refs/heads/staging' && 'Stage' || 'Prod' }}
