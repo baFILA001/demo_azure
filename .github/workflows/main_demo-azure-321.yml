@@ -3,7 +3,7 @@ name: Build and deploy Python project to Azure Function App
 on:
   push:
     branches:
-      - main         # For Dev environment
+      - Dev         # For Dev environment
       - Stage     # For Staging environment
       - Prod   # For Production environment
   workflow_dispatch:
@@ -87,7 +87,7 @@ jobs:
           enable-oryx-build: true
           
       - name: 'Deploy to Azure Function App (Production)'
-        if: github.ref == 'refs/heads/Main'  # Condition for Production environment
+        if: github.ref == 'refs/heads/Prod'  # Condition for Production environment
         uses: Azure/functions-action@v1
         with:
           app-name: ${{ secrets.APP_NAME_PROD }}  # Deploy to Production Azure Function App
@@ -97,4 +97,4 @@ jobs:
           enable-oryx-build: true
 
     environment:
-      name: ${{ github.ref == 'refs/heads/main' && 'Prod' || github.ref == 'refs/heads/staging' && 'Stage' || 'Dev' }}
+      name: ${{ github.ref == 'refs/heads/main' && 'Dev' || github.ref == 'refs/heads/staging' && 'Stage' || 'Prod' }}
