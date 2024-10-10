@@ -60,7 +60,7 @@ jobs:
 
       # Login to Azure with the correct federated identity for each environment
       - name: Login to Azure (Dev)
-        if: github.ref == 'refs/heads/Dev' || github.ref == 'refs/heads/main' 
+        if: github.ref == 'refs/heads/Dev'
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
@@ -68,7 +68,7 @@ jobs:
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
       - name: Login to Azure (Stage)
-        if: github.ref == 'refs/heads/Stage' || github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/Stage' 
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
@@ -76,7 +76,7 @@ jobs:
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
       - name: Login to Azure (Prod)
-        if: github.ref == 'refs/heads/Prod' || github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/Prod' 
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
